@@ -161,15 +161,9 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
         print('Epoch : {}'.format(epoch + 1))
         loss_log = []
         for image, label in get_batches_fn(batch_size):
-            _, loss = sess.run([train_op, cross_entropy_loss],
-                                feed_dict={
-                                    input_image: image,
-                                    correct_label: label,
-                                    keep_prob: 0.5,
-                                    learning_rate: 0.00001
-                                })
+            _, loss = sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image, correct_label: label, keep_prob: 0.5, learning_rate: 0.00001})
             loss_log.append('{:3f}'.format(loss))
-        #print(loss_log)
+        #print(loss_log) Unable to print because of OS error :length too large
         print("Next Epoch")
     print('Training finished')
 
@@ -180,7 +174,6 @@ def run():
     image_shape = (160, 576)
     data_dir = './data'
     runs_dir = './runs'
-    model_dir = './models'
     tests.test_for_kitti_dataset(data_dir)
 
     # Download pretrained vgg model
@@ -192,19 +185,14 @@ def run():
 
     with tf.Session() as sess:
         # Path to vgg model
-        config = tf.ConfigProto(
-        device_count = {'GPU': 0}
-        )
+        
+        #Run on the CPU
+        config = tf.ConfigProto(device_count = {'GPU': 0}) #comment this line to run on GPU
         sess = tf.Session(config=config)
         vgg_path = os.path.join(data_dir, 'vgg')
         # Create function to get batches
         get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
-
-        # OPTIONAL: Augment Images for better results
-        #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
-
-        # TODO: Build NN using load_vgg, layers, and optimize function
-
+        
         # Placeholders
         correct_label = tf.placeholder(tf.int32, [None, None, None, num_classes], name='correct_label')
         learning_rate = tf.placeholder(tf.float32, name='learning_rate')
@@ -214,6 +202,7 @@ def run():
 
         # Creating new layers.
         layer_output = layers(layer3_out, layer4_out, layer7_out, num_classes)
+        # TODO: Build NN using load_vgg, layers, and optimize function
 
         # Creating loss and optimizer operations.
         logits, train_op, cross_entropy_loss = optimize(layer_output, correct_label, learning_rate, num_classes)
@@ -222,7 +211,7 @@ def run():
         epochs = 6 # 6 12 24 
         batch_size = 4
 
-        saver = tf.train.Saver()
+        #saver = tf.train.Saver()
 
         train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
                  correct_label, keep_prob, learning_rate)
